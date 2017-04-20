@@ -1,0 +1,257 @@
+<!DOCTYPE HTML>
+<!--
+	Spatial by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+-->
+<html>
+
+<head>
+    <title>角色關係圖</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="vis.js"></script>
+    <link href="vis.css" rel="stylesheet" type="text/css" /> </head>
+
+<body class="landing">
+<embed src="nocat.mp3" autostart="true" hidden="true" loop=true volume="100" width="0" height="0">
+    <header id="header">
+    <h1><strong>Social network</strong></h1>
+                <nav id="nav">
+                    <ul>
+                        <li><a href="social.html#banner">關係圖</a></li>
+                        <li><a href="social.html#one">查詢</a></li>
+                        <li><a href="social.html#two">結論</a></li>
+                    </ul>
+                </nav>
+        </header>
+    </header> 
+    <a href="#menu" class="navPanelToggle"><span class="fa fa-bars"></span></a>
+    <!-- Banner -->
+    <section id="banner">
+        <h2>神鵰俠侶&amp;射鵰英雄傳角色關係圖</h2>
+        <div id="viewport"> </div>
+    </section>
+    <!-- One -->
+    <section id="one" class="wrapper style1">
+        <div class="container 75%">
+            <div id="search">
+                <form> <h2>名字:</h2>
+                    <input type="text" id="name" value=""> <br>
+                    <input type="button" value="確定" onclick="search()">
+                 </form>
+            </div>
+        </div>
+        <div id="searchView"> </div>
+    </section>
+    <!-- Two -->
+    <section id="two" class="wrapper style2 special">
+        <div class="container">
+            <div class="row 150%">
+                <div class="24u$ 24u$(xsmall)">
+                    <div class="image fit captioned">
+                        <h3>Average degree : 31.908571428571427  <br><br>
+                            Average clustering coefficient : 0.6881310504037847 <br><br>
+                            Diameter : 7 <br>
+                        </h3> 
+                        <img src="degree.PNG" alt="" />
+                        </div>
+                </div>
+
+            </div>
+            <ul class="actions">
+                <li><a href="#" class="button special big">回最上面</a></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/skel.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script type="text/javascript">
+        var nodes = new vis.DataSet();
+        var edges = new vis.DataSet();
+        var w_roles = {};
+        var node_token = [];
+        var edge_token = [];
+        $.post("SingleWithSize.json", {}, function (data) {
+            for (node in data.nodes) {
+                nodes.add({
+                    id: data.nodes[node].label
+                    , title: data.nodes[node].label
+                    , label: data.nodes[node].label
+                    , color: "rgba(210, 226, 240, 0.82)"
+                });
+            }
+            for (edge in data.edges) {
+                for (i in data.edges[edge]) {
+                    edges.add({
+                        id: edge + i
+                        , from: edge
+                        , to: i
+                        , color: "rgba(96, 135, 152, 0.51)" /*,value:data.edges[edge][i].weight*/
+                    });
+                    w_roles[edge + i] = parseInt(data.edges[edge][i].weight);
+                }
+            }
+            var container = document.getElementById('viewport');
+            var options = {
+                nodes: {
+                    shape: 'dot'
+                    , //size: 16,
+                    font: {
+                        face: '微軟正黑體'
+                        , size: 65
+                        , color: "#fff"
+                    }
+                }
+                , edges: {
+                    width: 0.15
+                    , "smooth": {
+                        "type": "continuous"
+                        , "forceDirection": "none"
+                        , "roundness": 0
+                    }
+                }
+                , interaction: {
+                    tooltipDelay: 0
+                    , hideEdgesOnDrag: false
+                , }
+                , physics: {
+                    stabilization: false
+                    , barnesHut: {
+                        gravitationalConstant: -10000
+                        , springConstant: 0.000001
+                        , springLength: 100
+                    }
+                }
+            };
+            var data = {
+                nodes: nodes
+                , edges: edges
+            };
+            var network = new vis.Network(container, data, options);
+            network.on("click", function (data) {
+                node = data.nodes
+                edge = data.edges
+                if (data.nodes != "") {
+                    if (node_token != "") {
+                        nodes.update({
+                            id: node_token
+                            , label: node_token
+                            , color: "rgba(210, 226, 240, 0.82)"
+                        });
+                    }
+                    nodes.update({ //點下去的node顏色
+                        id: node
+                        , label: node
+                        , color: "#8fa4ad"
+                    });
+                    node_token = node;
+                    if (edge_token != "") {
+                        for (i in edge_token) {
+                            edges.update({
+                                id: edge_token[i]
+                                , color: "rgba(96, 135, 152, 0.51)"
+                                , width: 0.15
+                            });
+                        }
+                    }
+                    edge_token = [];
+                    for (i in edge) {
+                        edge_token.push(edge[i]);
+                        edges.update({
+                            id: edge[i]
+                            , color: "#79ffd6"
+                            , width: w_roles[edge[i]] / 7
+                        });
+                    }
+                }
+            });
+            searchNetwork.fit({
+                animation: searchOptions
+            });
+        }, "json");
+    </script>
+    <script type="text/javascript">
+        function search() {
+            var searchNode = new vis.DataSet();
+            var searchEdge = new vis.DataSet();
+            var searchWidth = {};
+            $.post("DoubleWithSize.json", {}, function (data) {
+                for (edge in data.edges) {
+                    if (edge == document.getElementById("name").value) {
+                        searchNode.add({
+                            id: edge
+                            , title: edge
+                            , label: edge
+                            , color: "#49acc9"
+                        });
+                        for (i in data.edges[edge]) {
+                            searchNode.add({
+                                id: i
+                                , title: i
+                                , label: i
+                                , color: "#49acc9"
+                            });
+                        }
+                        for (i in data.edges[edge]) {
+                            searchEdge.add({
+                                id: edge + i
+                                , from: edge
+                                , to: i
+                                , color: "#4a5e67"
+                                , width: parseInt(data.edges[edge][i].weight) / 7
+                            });
+                        }
+                        break;
+                    }
+                }
+                var searchContainer = document.getElementById('searchView');
+                var searchOptions = {
+                    nodes: {
+                        shape: 'dot'
+                        , //size: 16,
+                        font: {
+                            face: '微軟正黑體'
+                            , size: 65
+                        }
+                    }
+                    , edges: {
+                        "smooth": {
+                            "type": "continuous"
+                            , "forceDirection": "none"
+                            , "roundness": 0
+                        }
+                    }
+                    , interaction: {
+                        tooltipDelay: 0
+                        , hideEdgesOnDrag: false
+                    , }
+                    , physics: {
+                        stabilization: true
+                        , barnesHut: {
+                            gravitationalConstant: -8000
+                            , springConstant: 0.0001
+                            , springLength: 50
+                        }
+                    }
+                };
+                var searchData = {
+                    nodes: searchNode
+                    , edges: searchEdge
+                };
+                var searchNetwork = new vis.Network(searchContainer, searchData, searchOptions);
+                searchNetwork.fit({
+                    animation: searchOptions
+                });
+            }, "json");
+        }
+    </script>
+</body>
+
+</html>
